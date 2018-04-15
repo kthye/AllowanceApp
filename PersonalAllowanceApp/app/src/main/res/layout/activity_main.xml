@@ -7,7 +7,7 @@
     tools:context="hack.allowanceapp.MainActivity">
 
     <TextView
-        android:id="@+id/tx"
+        android:id="@+id/CurrentAllowanceText"
         android:layout_width="285dp"
         android:layout_height="80dp"
         android:layout_marginEnd="8dp"
@@ -22,8 +22,9 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
     <Button
-        android:id="@+id/bt"
+        android:id="@+id/IncrementButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginRight="32dp"
@@ -33,7 +34,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/decButton"
+        android:id="@+id/DecrementButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="40dp"
@@ -42,36 +43,22 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="144dp"
-        android:layout_height="78dp"
-        android:layout_marginBottom="52dp"
-        android:layout_marginEnd="52dp"
-        android:layout_marginStart="48dp"
-        android:text="Enter Spending:"
+
+    android:text="Enter Spending:"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/bt2"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintEnd_toStartOf="@+id/DecrementButton"
+        app:layout_constraintStart_toStartOf="parent"
 
     <EditText
-        android:id="@+id/spendingInput"
+        android:id="@+id/SpendingInputText"
         android:layout_width="85dp"
         android:layout_height="46dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="28dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginBottom="40dp"
+        android:layout_marginStart="32dp"
         android:ems="10"
         android:hint="$0.00"
         android:inputType="numberDecimal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/textView2"
-        app:layout_constraintHorizontal_bias="0.209"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/textView2"
-        app:layout_constraintTop_toTopOf="@+id/textView2"
-        app:layout_constraintVertical_bias="0.176" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
