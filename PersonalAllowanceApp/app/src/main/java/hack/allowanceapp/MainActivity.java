@@ -8,13 +8,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.Calendar;
-import java.util.Date;
-
-import static android.provider.AlarmClock.EXTRA_MESSAGE;
+import java.util.Currency;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
@@ -26,23 +25,83 @@ public class MainActivity extends AppCompatActivity {
     FileOutputStream fos;
 
 
+    // *******************************************************************************************
+    /* Activity Elements */
+
+    EditText _spendingInput;
+    Button _incramentButton, _decrementButton;
+    TextView _currentAllowanceText;
+
+    // *******************************************************************************************
+    /* Setup and Teardowns */
+
     @Override
-    protected void onStop() {
-        try {
+    protected void onCreate(Bundle savedInstanceState) {
 
-            // Write current time and current allowance into file
-            fis.close();
-            fos = new FileOutputStream(FILENAME);
-            fos.write(longToBytes(currentAllowance));
-            fos.write(longToBytes(Calendar.getInstance().getTimeInMillis()), 8, 8);
-            fos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        super.onStop();
-        getDelegate().onStop();
+        // Reads the current allowance from file
+//        try {
+//            fis = openFileInput(FILENAME);
+//            byte [] b = new byte[8];
+//            fis.read(b);
+//            currentAllowance = bytesToLong(b);
+//            incramentAllowanceSinceLastLogin();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+        _incramentButton = (Button) findViewById(R.id.IncrementButton);
+        _decrementButton = (Button) findViewById(R.id.DecrementButton);
+        _currentAllowanceText = (TextView) findViewById(R.id.CurrentAllowanceText);
+        _spendingInput = (EditText) findViewById(R.id.SpendingInputText);
+
+        _incramentButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                count+=20.0;
+                NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.CANADA);
+                _currentAllowanceText.setText(currencyFormatter.format(count));
+            }
+        });
+
+        _decrementButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String amount = _spendingInput.getText().toString();
+                if (amount.isEmpty()) {
+                    return;
+                }
+                spending = Double.valueOf(_spendingInput.getText().toString());
+                count = count - spending;
+                NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.CANADA);
+                _currentAllowanceText.setText(currencyFormatter.format(count));
+
+            }
+        });
     }
+
+//    @Override
+//    protected void onStop() {
+//        try {
+//
+//            // Write current time and current allowance into file
+//            fis.close();
+//            fos = new FileOutputStream(FILENAME);
+//            fos.write(longToBytes(currentAllowance));
+//            fos.write(longToBytes(Calendar.getInstance().getTimeInMillis()), 8, 8);
+//            fos.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        super.onStop();
+//        getDelegate().onStop();
+//    }
+
+    // *******************************************************************************************
+    /* Work in progress */
 
     /*
     // When clicking Send button
@@ -91,60 +150,5 @@ public class MainActivity extends AppCompatActivity {
 
     private double count = 0.0;
     private double spending = 0.0;
-
-
-    EditText spendingInput;
-    Button btn,decButton;
-    TextView txv;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        // Reads the current allowance from file
-        try {
-            fis = openFileInput(FILENAME);
-            byte [] b = new byte[8];
-            fis.read(b);
-            currentAllowance = bytesToLong(b);
-            incramentAllowanceSinceLastLogin();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        btn = (Button) findViewById(R.id.bt);
-        decButton = (Button) findViewById(R.id.decButton);
-        txv = (TextView) findViewById(R.id.tx);
-        spendingInput = (EditText) findViewById(R.id.spendingInput);
-
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                count+=20.0;
-                txv.setText(Double.toString(count));
-            }
-        });
-
-        decButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (spendingInput.getText().toString() != null || spendingInput.getText().toString() != "") {
-
-                    spending = Double.valueOf(spendingInput.getText().toString());
-                    count = count - spending;
-                    txv.setText(Double.toString(count));
-
-                }
-
-            }
-        });
-
-
-
-
-    }
-
-
-
 
 }
