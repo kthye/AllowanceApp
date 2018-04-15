@@ -8,23 +8,19 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Calendar;
-import java.util.Date;
-
-import static android.provider.AlarmClock.EXTRA_MESSAGE;
 
 public class MainActivity extends AppCompatActivity {
-    public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
+
+    private static DecimalFormat currency = new DecimalFormat(".##");
 
     private long currentAllowance;
-
     String FILENAME = "DataSinceLastLogout.txt";
     FileInputStream fis;
     FileOutputStream fos;
-
 
     @Override
     protected void onStop() {
@@ -36,12 +32,65 @@ public class MainActivity extends AppCompatActivity {
             fos.write(longToBytes(currentAllowance));
             fos.write(longToBytes(Calendar.getInstance().getTimeInMillis()), 8, 8);
             fos.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        super.onStop();
+        getDelegate().onStop();
+    }
+
+
+    EditText spendingInput;
+    Button incramentButton,decButton;
+    TextView currencyTextView;
+
+    private double count = 0.0;
+    private double spending = 0.0;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        // Reads the current allowance from file
+        try {
+            fis = openFileInput(FILENAME);
+            byte [] b = new byte[8];
+            fis.read(b);
+            currentAllowance = bytesToLong(b);
+            incramentAllowanceSinceLastLogin();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        super.onStop();
-        getDelegate().onStop();
+        // Finds elements on screen
+        incramentButton = (Button) findViewById(R.id.bt);
+        decButton = (Button) findViewById(R.id.decButton);
+        currencyTextView = (TextView) findViewById(R.id.tx);
+        spendingInput = (EditText) findViewById(R.id.spendingInput);
+
+        incramentButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                count+=6.0;
+                currencyTextView.setText(currency.format(count));
+                String x = currency.format(count);
+            }
+        });
+
+        decButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (spendingInput.getText().toString() != null || spendingInput.getText().toString() != "") {
+
+                    spending = Double.valueOf(spendingInput.getText().toString());
+                    count = count - spending;
+                    currencyTextView.setText(Double.toString(count));
+
+                }
+
+            }
+        });
     }
 
     /*
@@ -86,65 +135,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return result;
     }
-
-
-
-    private double count = 0.0;
-    private double spending = 0.0;
-
-
-    EditText spendingInput;
-    Button btn,decButton;
-    TextView txv;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        // Reads the current allowance from file
-        try {
-            fis = openFileInput(FILENAME);
-            byte [] b = new byte[8];
-            fis.read(b);
-            currentAllowance = bytesToLong(b);
-            incramentAllowanceSinceLastLogin();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        btn = (Button) findViewById(R.id.bt);
-        decButton = (Button) findViewById(R.id.decButton);
-        txv = (TextView) findViewById(R.id.tx);
-        spendingInput = (EditText) findViewById(R.id.spendingInput);
-
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                count+=20.0;
-                txv.setText(Double.toString(count));
-            }
-        });
-
-        decButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (spendingInput.getText().toString() != null || spendingInput.getText().toString() != "") {
-
-                    spending = Double.valueOf(spendingInput.getText().toString());
-                    count = count - spending;
-                    txv.setText(Double.toString(count));
-
-                }
-
-            }
-        });
-
-
-
-
-    }
-
-
-
-
 }
