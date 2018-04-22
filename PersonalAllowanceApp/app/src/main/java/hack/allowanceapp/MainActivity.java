@@ -1,5 +1,7 @@
 package hack.allowanceapp;
 
+import android.content.Context;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -7,21 +9,25 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.NumberFormat;
-import java.util.Calendar;
-import java.util.Currency;
+import java.util.Arrays;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-    private long currentAllowance;
-    String FILENAME = "DataSinceLastLogout.txt";
-    FileInputStream fis;
-    FileOutputStream fos;
-    private double count = 0.0;
+    String FILENAME = "dateData.txt";
+
+    private static Context context;
+
+    private double allowance = 0.0;
     private double spending = 0.0;
 
     // *******************************************************************************************
@@ -39,17 +45,24 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        context = getApplicationContext();
 
-        // Reads the current allowance from file
-//        try {
-//            fis = openFileInput(FILENAME);
-//            byte [] b = new byte[8];
-//            fis.read(b);
-//            currentAllowance = bytesToLong(b);
-//            incramentAllowanceSinceLastLogin();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        //TODO Reads the current allowance from file
+        try {
+            DataInputStream inputDataFile = new DataInputStream(openFileInput(FILENAME));
+            byte [] tempBytes = new byte[8];
+            allowance = inputDataFile.readDouble();
+            pastTime = inputDataFile.readLong();
+            double temp = System.currentTimeMillis();
+            allowance += (temp - pastTime)/10000;
+            inputDataFile.close();
+        } catch (FileNotFoundException e)
+        {
+            // TODO CHECK IF NEW ACCOUNT
+        } catch (IOException e)
+        {
+            e.printStackTrace();
+        }
 
         _incramentButton = (Button) findViewById(R.id.IncrementButton);
         _decrementButton = (Button) findViewById(R.id.DecrementButton);
@@ -59,9 +72,9 @@ public class MainActivity extends AppCompatActivity {
         _incramentButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                count+=20.0;
+                allowance +=20.0;
                 NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.CANADA);
-                _currentAllowanceText.setText(currencyFormatter.format(count));
+                _currentAllowanceText.setText(currencyFormatter.format(allowance));
             }
         });
 
@@ -73,31 +86,63 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 spending = Double.valueOf(_spendingInput.getText().toString());
-                count = count - spending;
+                allowance = allowance - spending;
                 NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.CANADA);
-                _currentAllowanceText.setText(currencyFormatter.format(count));
-
+                _currentAllowanceText.setText(currencyFormatter.format(allowance));
             }
         });
+
+        Button b = (Button) findViewById(R.id.StartButton);
+        b.setText("stop");
+        timerHandler.postDelayed(timerRunnable, 0);
+        b.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Button b = (Button) v;
+                if (b.getText().equals("stop")) {
+                    timerHandler.removeCallbacks(timerRunnable);
+                    b.setText("start");
+                } else {
+                    timerHandler.postDelayed(timerRunnable, 0);
+                    b.setText("stop");
+                }
+            }
+        });
+
     }
 
 //    @Override
-//    protected void onStop() {
+//    protected void onPause() {
+//        super.onPause();
 //        try {
-//
-//            // Write current time and current allowance into file
-//            fis.close();
-//            fos = new FileOutputStream(FILENAME);
-//            fos.write(longToBytes(currentAllowance));
-//            fos.write(longToBytes(Calendar.getInstance().getTimeInMillis()), 8, 8);
-//            fos.close();
+//            FileOutputStream outputFileStream = openFileOutput(FILENAME, context.MODE_PRIVATE);
+//            DataOutputStream dataOutputStream = new DataOutputStream(outputFileStream);
+//            dataOutputStream.writeDouble(allowance);
+//            dataOutputStream.writeLong(System.currentTimeMillis());
+//            dataOutputStream.close();
+//        } catch (FileNotFoundException e) {
+//            // TODO file should always be found
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
-//
-//        super.onStop();
-//        getDelegate().onStop();
 //    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        try {
+            FileOutputStream outputFileStream = openFileOutput(FILENAME, context.MODE_PRIVATE);
+            DataOutputStream dataOutputStream = new DataOutputStream(outputFileStream);
+            dataOutputStream.writeDouble(allowance);
+            dataOutputStream.writeLong(System.currentTimeMillis());
+            dataOutputStream.close();
+        } catch (FileNotFoundException e) {
+            // TODO file should always be found
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     // *******************************************************************************************
     /* Work in progress */
@@ -112,36 +157,27 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 */
-    private void incramentAllowanceSinceLastLogin()
-    {
-        try {
-
-            byte[] b = new byte[8];
-            fis.read(b, 8, 8);
-            long timeSinceLastLogin = bytesToLong(b);
-            long increments = Calendar.getInstance().getTimeInMillis() - timeSinceLastLogin;
-            currentAllowance += (increments / 1000);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public static double convertToDouble(byte[] array) {
+        ByteBuffer buffer = ByteBuffer.wrap(array);
+        return buffer.getDouble();
     }
 
-    private static byte[] longToBytes(long l) {
-        byte[] result = new byte[8];
-        for (int i = 7; i >= 0; i--) {
-            result[i] = (byte)(l & 0xFF);
-            l >>= 8;
-        }
-        return result;
-    }
+    long pastTime = 0;
+    //runs without a timer by reposting this handler at the end of the runnable
+    Handler timerHandler = new Handler();
+    Runnable timerRunnable = new Runnable() {
 
-    private static long bytesToLong(byte[] b) {
-        long result = 0;
-        for (int i = 0; i < 8; i++) {
-            result <<= 8;
-            result |= (b[i] & 0xFF);
+        @Override
+        public void run() {
+
+            if (System.currentTimeMillis() > pastTime + 1000) {
+                pastTime = System.currentTimeMillis();
+                allowance += 0.01;
+                NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.CANADA);
+                _currentAllowanceText.setText(currencyFormatter.format(allowance));
+            }
+
+            timerHandler.postDelayed(this, 500);
         }
-        return result;
-    }
+    };
 }
