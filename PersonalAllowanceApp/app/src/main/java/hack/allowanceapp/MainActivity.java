@@ -21,15 +21,9 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity {
-
-    String FILENAME = "dateData.txt";
-
-    private static Context context;
-
-    private double allowance = 0.0;
-    private double spending = 0.0;
-
+public class MainActivity extends AppCompatActivity
+{
+    private AllowanceManager _allowanceManager;
     private EditText _spendingInput;
     private Button _incramentButton, _decrementButton;
     private TextView _currentAllowanceText;
@@ -39,25 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        context = getApplicationContext();
-
-        // TODO: Reads the current allowance from file
-        try {
-            DataInputStream inputDataFile = new DataInputStream(openFileInput(FILENAME));
-            byte [] tempBytes = new byte[8];
-            allowance = inputDataFile.readDouble();
-            pastTime = inputDataFile.readLong();
-            double secondsPassed = Long.valueOf(System.currentTimeMillis() - pastTime)
-                    .doubleValue()/1000.0;
-            allowance += secondsPassed/100.0;
-            inputDataFile.close();
-        } catch (FileNotFoundException e)
-        {
-            // TODO: CHECK IF NEW ACCOUNT
-        } catch (IOException e)
-        {
-            e.printStackTrace();
-        }
+        _allowanceManager = AllowanceManager.getInstance(this);
 
         _incramentButton = (Button) findViewById(R.id.IncrementButton);
         _decrementButton = (Button) findViewById(R.id.DecrementButton);
@@ -67,9 +43,9 @@ public class MainActivity extends AppCompatActivity {
         _incramentButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                allowance +=20.0;
+                _allowanceManager.incrementAllowance(20.0);
                 NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.CANADA);
-                _currentAllowanceText.setText(currencyFormatter.format(allowance));
+                _currentAllowanceText.setText(currencyFormatter.format(_allowanceManager.getAllowance()));
             }
         });
 
@@ -77,13 +53,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 String amount = _spendingInput.getText().toString();
-                if (amount.isEmpty()) {
+                if (amount == null || amount.isEmpty()) {
                     return;
                 }
-                spending = Double.valueOf(_spendingInput.getText().toString());
-                allowance = allowance - spending;
+                double spending = Double.valueOf(_spendingInput.getText().toString());
+                _allowanceManager.decrementAllowance(spending);
+
                 NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.CANADA);
-                _currentAllowanceText.setText(currencyFormatter.format(allowance));
+                _currentAllowanceText.setText(currencyFormatter.format(_allowanceManager.getAllowance()));
             }
         });
 
@@ -91,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
         b.setText("stop");
         timerHandler.postDelayed(timerRunnable, 0);
         b.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 Button b = (Button) v;
@@ -107,36 +83,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-//    @Override
-//    protected void onPause() {
-//        super.onPause();
-//        try {
-//            FileOutputStream outputFileStream = openFileOutput(FILENAME, context.MODE_PRIVATE);
-//            DataOutputStream dataOutputStream = new DataOutputStream(outputFileStream);
-//            dataOutputStream.writeDouble(allowance);
-//            dataOutputStream.writeLong(System.currentTimeMillis());
-//            dataOutputStream.close();
-//        } catch (FileNotFoundException e) {
-//            // TODO file should always be found
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
     @Override
     protected void onStop() {
         super.onStop();
-        try {
-            FileOutputStream outputFileStream = openFileOutput(FILENAME, context.MODE_PRIVATE);
-            DataOutputStream dataOutputStream = new DataOutputStream(outputFileStream);
-            dataOutputStream.writeDouble(allowance);
-            dataOutputStream.writeLong(System.currentTimeMillis());
-            dataOutputStream.close();
-        } catch (FileNotFoundException e) {
-            // TODO: file should always be found
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        _allowanceManager.updateAllowanceToFile(this);
     }
 
     // *******************************************************************************************
@@ -152,24 +102,18 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 */
-    public static double convertToDouble(byte[] array) {
-        ByteBuffer buffer = ByteBuffer.wrap(array);
-        return buffer.getDouble();
-    }
 
-    long pastTime = 0;
+    private long pastTime = 0;
     //runs without a timer by reposting this handler at the end of the runnable
     Handler timerHandler = new Handler();
     Runnable timerRunnable = new Runnable() {
-
         @Override
         public void run() {
-
-            if (System.currentTimeMillis() > pastTime + 1000) {
+            if (System.currentTimeMillis() > pastTime + 2000) {
                 pastTime = System.currentTimeMillis();
-                allowance += 0.01;
+                _allowanceManager.incrementAllowance(0.01);
                 NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.CANADA);
-                _currentAllowanceText.setText(currencyFormatter.format(allowance));
+                _currentAllowanceText.setText(currencyFormatter.format(_allowanceManager.getAllowance()));
             }
 
             timerHandler.postDelayed(this, 500);
