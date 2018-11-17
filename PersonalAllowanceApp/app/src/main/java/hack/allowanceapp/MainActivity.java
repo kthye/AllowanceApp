@@ -30,15 +30,9 @@ public class MainActivity extends AppCompatActivity {
     private double allowance = 0.0;
     private double spending = 0.0;
 
-    // *******************************************************************************************
-    /* Activity Elements */
-
-    EditText _spendingInput;
-    Button _incramentButton, _decrementButton;
-    TextView _currentAllowanceText;
-
-    // *******************************************************************************************
-    /* Setup and Teardowns */
+    private EditText _spendingInput;
+    private Button _incramentButton, _decrementButton;
+    private TextView _currentAllowanceText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,18 +41,19 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         context = getApplicationContext();
 
-        //TODO Reads the current allowance from file
+        // TODO: Reads the current allowance from file
         try {
             DataInputStream inputDataFile = new DataInputStream(openFileInput(FILENAME));
             byte [] tempBytes = new byte[8];
             allowance = inputDataFile.readDouble();
             pastTime = inputDataFile.readLong();
-            double temp = System.currentTimeMillis();
-            allowance += (temp - pastTime)/10000;
+            double secondsPassed = Long.valueOf(System.currentTimeMillis() - pastTime)
+                    .doubleValue()/1000.0;
+            allowance += secondsPassed/100.0;
             inputDataFile.close();
         } catch (FileNotFoundException e)
         {
-            // TODO CHECK IF NEW ACCOUNT
+            // TODO: CHECK IF NEW ACCOUNT
         } catch (IOException e)
         {
             e.printStackTrace();
@@ -138,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
             dataOutputStream.writeLong(System.currentTimeMillis());
             dataOutputStream.close();
         } catch (FileNotFoundException e) {
-            // TODO file should always be found
+            // TODO: file should always be found
         } catch (IOException e) {
             e.printStackTrace();
         }
